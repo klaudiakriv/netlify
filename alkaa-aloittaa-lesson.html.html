@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alkaa vai aloittaa? — Finnish Daily Dialogues</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #02151A; --navy-mid: #1A3A4A;
+    --brand-bg: #CDE1ED; --rule: #A8C8DC; --surface: #F4F9FB;
+    --amber-bg: #F5EDDF; --amber-bdr: #C8A87A; --amber-text: #7A5320;
+    --success-bg: #E1F5EE; --success-text: #085041;
+    --danger-bg: #FCEBEB; --danger-text: #A32D2D;
+    --insta: #E1306C;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; background:#fff; color:var(--navy); }
+
+  /* Header */
+  .header { background:var(--brand-bg); padding:1.25rem 1.5rem 1rem; border-bottom:0.5px solid var(--rule); }
+  .header-ep { font-size:11px; color:var(--navy-mid); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px; }
+  .header-title { font-size:22px; font-weight:600; color:var(--navy); margin-bottom:2px; line-height:1.2; }
+  .header-sub { font-size:13px; color:var(--navy-mid); }
+
+  /* Tabs */
+  .progress-wrap { padding:0 1rem; background:#fff; border-bottom:0.5px solid var(--rule); overflow-x:auto; }
+  .step-tabs { display:flex; min-width:max-content; }
+  .step-tab { padding:0.65rem 0.6rem; text-align:center; font-size:10px; color:var(--navy-mid); border-bottom:2px solid transparent; cursor:pointer; letter-spacing:0.04em; white-space:nowrap; }
+  .step-tab.active { color:var(--navy); border-bottom-color:var(--navy); font-weight:500; }
+  .step-tab.done { color:var(--rule); border-bottom-color:var(--rule); }
+
+  .content { max-width:600px; margin:0 auto; padding:1.5rem 1.25rem 2rem; }
+  .step { display:none; }
+  .step.visible { display:block; }
+  .step-heading { font-size:17px; font-weight:600; color:var(--navy); margin-bottom:1rem; }
+
+  /* Dialogue */
+  .dialogue-line { display:flex; gap:10px; margin-bottom:1rem; align-items:flex-start; }
+  .speaker { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; flex-shrink:0; margin-top:2px; }
+  .sp-a { background:var(--brand-bg); color:var(--navy); }
+  .sp-b { background:var(--navy); color:#fff; }
+  .line-fi { font-size:14px; font-weight:500; color:var(--navy); line-height:1.4; margin-bottom:2px; }
+  .line-en { font-size:12px; color:var(--navy-mid); font-style:italic; line-height:1.4; }
+
+  /* Tap cards */
+  .tap-hint { font-size:12px; color:var(--navy-mid); margin-bottom:0.75rem; }
+  .phrase-card { background:var(--surface); border:0.5px solid var(--rule); border-radius:10px; padding:0.875rem 1rem; margin-bottom:0.625rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .phrase-fi { font-size:14px; font-weight:500; color:var(--navy); margin-bottom:3px; }
+  .phrase-en { font-size:13px; color:var(--navy-mid); }
+  .phrase-en.hidden { display:none; }
+  .reveal-badge { display:inline-block; font-size:11px; color:var(--rule); margin-top:4px; }
+
+  /* Verb cards */
+  .verb-card { border:0.5px solid var(--rule); border-radius:10px; margin-bottom:0.75rem; overflow:hidden; }
+  .verb-header { background:var(--surface); padding:0.875rem 1rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center; -webkit-tap-highlight-color:transparent; }
+  .verb-fi { font-size:15px; font-weight:600; color:var(--navy); }
+  .verb-meaning { font-size:13px; color:var(--navy-mid); }
+  .verb-toggle { font-size:12px; color:var(--rule); flex-shrink:0; margin-left:8px; }
+  .verb-body { padding:0.875rem 1rem; border-top:0.5px solid var(--rule); display:none; }
+  .verb-body.open { display:block; }
+  .verb-example { font-size:13px; margin-bottom:6px; }
+  .verb-example .fi { font-weight:500; color:var(--navy); }
+  .verb-example .en { color:var(--navy-mid); font-style:italic; }
+  .verb-note { font-size:12px; color:var(--amber-text); background:var(--amber-bg); border-radius:6px; padding:6px 10px; margin-top:8px; }
+
+  /* Watch out */
+  .watch-out { background:var(--amber-bg); border-left:3px solid var(--amber-bdr); border-radius:0 8px 8px 0; padding:0.875rem 1rem; margin:1rem 0; }
+  .watch-title { font-size:12px; font-weight:600; color:var(--amber-text); margin-bottom:4px; }
+  .watch-body { font-size:13px; color:var(--amber-text); line-height:1.55; }
+  .watch-body b { font-weight:600; }
+
+  /* Grammar */
+  .grammar-block { border:0.5px solid var(--rule); border-radius:10px; padding:1rem; margin-bottom:0.75rem; }
+  .grammar-title { font-size:13px; font-weight:600; color:var(--navy); margin-bottom:8px; }
+  .grammar-body { font-size:13px; color:var(--navy-mid); line-height:1.55; }
+  .grammar-body b { color:var(--navy); font-weight:600; }
+  .grammar-examples { margin-top:8px; }
+  .gex { font-size:13px; margin-bottom:4px; }
+  .gex .fi { font-weight:500; color:var(--navy); }
+  .gex .en { color:var(--navy-mid); font-style:italic; }
+
+  /* Compare table */
+  .compare-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  .compare-table th { background:var(--brand-bg); padding:7px 10px; text-align:left; font-weight:600; font-size:11px; color:var(--navy-mid); letter-spacing:0.05em; }
+  .compare-table td { padding:7px 10px; border-top:0.5px solid var(--rule); vertical-align:top; }
+  .compare-table td:first-child { font-weight:500; color:var(--navy); white-space:nowrap; }
+  .compare-table td:last-child { color:var(--navy-mid); }
+
+  /* Fill in blank */
+  .section-label { font-size:11px; font-weight:600; color:var(--navy-mid); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.75rem; margin-top:1.25rem; }
+  .fill-item { background:var(--surface); border:0.5px solid var(--rule); border-radius:10px; padding:0.875rem 1rem; margin-bottom:0.625rem; }
+  .fill-sentence { font-size:14px; color:var(--navy); line-height:1.9; }
+  .fill-input { border:none; border-bottom:1.5px solid var(--rule); background:transparent; font-size:14px; color:var(--navy); outline:none; padding:0 4px; width:130px; font-family:inherit; }
+  .fill-input:focus { border-bottom-color:var(--navy); }
+  .fill-hint { font-size:11px; color:var(--navy-mid); margin-top:4px; }
+  .fill-feedback { font-size:12px; margin-top:6px; min-height:16px; }
+  .fill-check-btn { margin-top:0.75rem; padding:8px 16px; background:var(--navy); color:#fff; border:none; border-radius:7px; font-size:13px; cursor:pointer; font-family:inherit; -webkit-tap-highlight-color:transparent; }
+
+  /* Quiz */
+  .q-counter { font-size:12px; color:var(--navy-mid); margin-bottom:0.5rem; }
+  .q-text { font-size:14px; font-weight:500; color:var(--navy); margin-bottom:1rem; line-height:1.5; }
+  .q-opts { display:grid; gap:8px; margin-bottom:1rem; }
+  .q-opt { background:#fff; border:0.5px solid var(--rule); border-radius:8px; padding:0.8rem 1rem; font-size:13px; color:var(--navy); cursor:pointer; text-align:left; width:100%; font-family:inherit; -webkit-tap-highlight-color:transparent; }
+  .q-opt.correct { background:var(--success-bg); border-color:#7BBFB0; color:var(--success-text); font-weight:500; }
+  .q-opt.wrong { background:var(--danger-bg); border-color:#F09595; color:var(--danger-text); }
+  .q-feedback { font-size:13px; margin-bottom:1rem; min-height:18px; }
+
+  /* Score */
+  .score-wrap { text-align:center; padding:1.5rem 0 1rem; }
+  .score-big { font-size:52px; font-weight:600; color:var(--navy); line-height:1; }
+  .score-label { font-size:14px; color:var(--navy-mid); margin-top:6px; margin-bottom:1rem; }
+  .score-msg { font-size:15px; color:var(--navy); margin-bottom:1.5rem; }
+
+  /* Instagram CTA */
+  .insta-cta { background:#FFF0F5; border:0.5px solid #F4ACCA; border-radius:12px; padding:1.25rem; text-align:center; margin-top:1rem; }
+  .insta-cta p { font-size:13px; color:var(--navy-mid); margin-bottom:0.75rem; line-height:1.5; }
+  .insta-btn { display:inline-block; background:var(--insta); color:#fff; text-decoration:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:600; -webkit-tap-highlight-color:transparent; }
+
+  .section-divider { height:0.5px; background:var(--rule); margin:1.25rem 0; }
+  .nav-row { display:flex; gap:8px; justify-content:flex-end; margin-top:1.5rem; padding-top:1rem; border-top:0.5px solid var(--rule); }
+  .btn { padding:12px 22px; border-radius:8px; font-size:15px; font-weight:500; cursor:pointer; border:0.5px solid var(--rule); background:#fff; color:var(--navy); font-family:inherit; -webkit-tap-highlight-color:transparent; }
+  .btn-primary { background:var(--navy); color:#fff; border-color:var(--navy); }
+  .fdd-logo { font-size:11px; color:var(--navy-mid); text-align:center; margin-top:1.5rem; letter-spacing:0.05em; }
+
+.feedback-box {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  text-align: center;
+}
+.feedback-sub {
+  margin: .35rem 0 1rem;
+  color: var(--navy-mid);
+  font-size: .92rem;
+}
+.feedback-options {
+  display: grid;
+  gap: .55rem;
+}
+.feedback-btn {
+  width: 100%;
+  padding: .75rem .9rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--navy);
+  cursor: pointer;
+  font: inherit;
+}
+.feedback-btn.selected {
+  border-color: var(--navy-mid);
+}
+.feedback-thanks {
+  margin-top: .8rem;
+  font-size: .9rem;
+  color: var(--success-text);
+  min-height: 1.2em;
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-ep">Episode 27 · Finnish Daily Dialogues</div>
+  <div class="header-title">Alkaa vai aloittaa?</div>
+  <div class="header-sub">Talking about plans and new beginnings</div>
+</div>
+
+<div class="progress-wrap">
+  <div class="step-tabs">
+    <div class="step-tab active" id="tab-0" onclick="goTo(0)">Read</div>
+    <div class="step-tab" id="tab-1" onclick="goTo(1)">Phrases</div>
+    <div class="step-tab" id="tab-2" onclick="goTo(2)">Verbs</div>
+    <div class="step-tab" id="tab-3" onclick="goTo(3)">Grammar</div>
+    <div class="step-tab" id="tab-4" onclick="goTo(4)">Practice</div>
+    <div class="step-tab" id="tab-5" onclick="goTo(5)">Score</div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- STEP 0: Dialogue -->
+<div class="step visible" id="step-0">
+  <p class="step-heading">The dialogue</p>
+  <div class="dialogue-line"><div class="speaker sp-a">K</div><div><div class="line-fi">Mitä sä meinasit tehä viikonloppuna?</div><div class="line-en">What were you planning to do this weekend?</div></div></div>
+  <div class="dialogue-line"><div class="speaker sp-b">I</div><div><div class="line-fi">No, mä haluan aloittaa tänä syksynä jonkun uuden harrastuksen, joten mä ajattelin mennä tanssikurssille. Entä sä?</div><div class="line-en">Well, I want to start some new hobby this autumn, so I was thinking of going to a dance course. What about you?</div></div></div>
+  <div class="dialogue-line"><div class="speaker sp-a">K</div><div><div class="line-fi">Meen varmaan ainakin salille ja syömään ravintolaan. Meinasin myös nähdä kavereita, mutta en oo vielä sopinut mitään.</div><div class="line-en">I'll probably go to the gym at least, and out to eat. I was also thinking of seeing some friends, but I haven't arranged anything yet.</div></div></div>
+  <div class="dialogue-line"><div class="speaker sp-b">I</div><div><div class="line-fi">Okei, kuulostaa kivalta. Mä ajattelin mennä lauantaina kirppikselle. Tuutko mukaan?</div><div class="line-en">Okay, sounds nice. I was thinking of going to the flea market on Saturday. Wanna come along?</div></div></div>
+  <div class="dialogue-line"><div class="speaker sp-a">K</div><div><div class="line-fi">Joo, voin tulla! Ja sen jälkeen voidaan mennä kahville.</div><div class="line-en">Yeah, I can come! And after that we can go for coffee.</div></div></div>
+  <div class="dialogue-line"><div class="speaker sp-b">I</div><div><div class="line-fi">Käy! Entäs mitä sä aiot tehä sunnuntaina?</div><div class="line-en">Deal! And what are you planning to do on Sunday?</div></div></div>
+  <div class="dialogue-line"><div class="speaker sp-a">K</div><div><div class="line-fi">Mä aion vaan ottaa rennosti. Oon vaan kotona ja katon mun suosikki tv-sarjaa... koska uusi kausi alkaa.</div><div class="line-en">I'm just gonna take it easy. I'll just be at home watching my favourite TV show... because a new season begins.</div></div></div>
+  <div class="dialogue-line"><div class="speaker sp-b">I</div><div><div class="line-fi">Ehkä rupeen myös järjestämään mun vaatekaappia!</div><div class="line-en">Maybe I'll also start organising my wardrobe!</div></div></div>
+  <div class="nav-row"><button class="btn btn-primary" onclick="goTo(1)">Next →</button></div>
+</div>
+
+<!-- STEP 1: Key phrases -->
+<div class="step" id="step-1">
+  <p class="step-heading">Key phrases</p>
+  <p class="tap-hint">Tap a card to reveal the translation.</p>
+
+  <div class="phrase-card" onclick="toggle(this)">
+    <div class="phrase-fi">Aion aloittaa uuden harrastuksen</div>
+    <div class="phrase-en hidden">I'm going to start a new hobby</div>
+    <div class="reveal-badge">tap to reveal</div>
+  </div>
+  <div class="phrase-card" onclick="toggle(this)">
+    <div class="phrase-fi">Meinasin mennä salille</div>
+    <div class="phrase-en hidden">I was planning to go to the gym</div>
+    <div class="reveal-badge">tap to reveal</div>
+  </div>
+  <div class="phrase-card" onclick="toggle(this)">
+    <div class="phrase-fi">Aloitan kurssin ensi viikolla</div>
+    <div class="phrase-en hidden">I'll start a course next week (I start something)</div>
+    <div class="reveal-badge">tap to reveal</div>
+  </div>
+  <div class="phrase-card" onclick="toggle(this)">
+    <div class="phrase-fi">Kurssi alkaa ensi viikolla</div>
+    <div class="phrase-en hidden">The course starts next week (something begins)</div>
+    <div class="reveal-badge">tap to reveal</div>
+  </div>
+  <div class="phrase-card" onclick="toggle(this)">
+    <div class="phrase-fi">Alan lukemaan enemmän</div>
+    <div class="phrase-en hidden">I'll start reading more</div>
+    <div class="reveal-badge">tap to reveal</div>
+  </div>
+  <div class="phrase-card" onclick="toggle(this)">
+    <div class="phrase-fi">Rupeen opiskelemaan suomea</div>
+    <div class="phrase-en hidden">I'll start studying Finnish (puhekieli: ruveta)</div>
+    <div class="reveal-badge">tap to reveal</div>
+  </div>
+  <div class="phrase-card" onclick="toggle(this)">
+    <div class="phrase-fi">Ryhdytään hommiin!</div>
+    <div class="phrase-en hidden">Let's get to work! (determined, intentional)</div>
+    <div class="reveal-badge">tap to reveal</div>
+  </div>
+  <div class="phrase-card" onclick="toggle(this)">
+    <div class="phrase-fi">Tuutko mukaan?</div>
+    <div class="phrase-en hidden">Wanna come along? (spoken: tuletko → tuutko)</div>
+    <div class="reveal-badge">tap to reveal</div>
+  </div>
+
+  <div class="watch-out">
+    <div class="watch-title">Watch out!</div>
+    <div class="watch-body">Finnish has <b>no separate future tense</b>. Use the present tense — the future meaning comes from the time expression: <b>Menen salille huomenna</b> = I will go to the gym tomorrow.</div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(0)">← Back</button>
+    <button class="btn btn-primary" onclick="goTo(2)">Next →</button>
+  </div>
+</div>
+
+<!-- STEP 2: Verbs -->
+<div class="step" id="step-2">
+  <p class="step-heading">6 verbs to know</p>
+  <p class="tap-hint">Tap each verb to see examples.</p>
+
+  <div class="verb-card">
+    <div class="verb-header" onclick="toggleVerb(this)">
+      <div><div class="verb-fi">aikoa</div><div class="verb-meaning">to intend / plan to</div></div>
+      <span class="verb-toggle">▼</span>
+    </div>
+    <div class="verb-body">
+      <div class="verb-example"><span class="fi">Aion aloittaa uuden harrastuksen.</span><br><span class="en">I'm going to start a new hobby.</span></div>
+      <div class="verb-example"><span class="fi">Aion opiskella enemmän.</span><br><span class="en">I intend to study more.</span></div>
+      <div class="verb-example"><span class="fi">Aiotko sä aloittaa jotain uutta?</span><br><span class="en">Are you going to start something new?</span></div>
+      <div class="verb-note">Conjugation: minä <b>aion</b>, sinä <b>aiot</b>, hän <b>aikoo</b> — notice the stem change.</div>
+    </div>
+  </div>
+
+  <div class="verb-card">
+    <div class="verb-header" onclick="toggleVerb(this)">
+      <div><div class="verb-fi">meinata</div><div class="verb-meaning">to plan / intend to (puhekieli)</div></div>
+      <span class="verb-toggle">▼</span>
+    </div>
+    <div class="verb-body">
+      <div class="verb-example"><span class="fi">Meinasin mennä salille tänään.</span><br><span class="en">I was planning to go to the gym today.</span></div>
+      <div class="verb-example"><span class="fi">Meinasin aloittaa uuden harrastuksen.</span><br><span class="en">I was planning to start a new hobby.</span></div>
+      <div class="verb-note">Often used in past tense — doesn't mean you actually did it! Could mean you ended up on the sofa eating chips 😄</div>
+    </div>
+  </div>
+
+  <div class="verb-card">
+    <div class="verb-header" onclick="toggleVerb(this)">
+      <div><div class="verb-fi">aloittaa</div><div class="verb-meaning">to start something (transitive)</div></div>
+      <span class="verb-toggle">▼</span>
+    </div>
+    <div class="verb-body">
+      <div class="verb-example"><span class="fi">Aloitan uuden kirjan.</span><br><span class="en">I'll start a new book.</span></div>
+      <div class="verb-example"><span class="fi">Aloitan tanssikurssin ensi viikolla.</span><br><span class="en">I'll start a dance course next week.</span></div>
+      <div class="verb-note"><b>Someone</b> starts <b>something</b>. There's always an object after it.</div>
+    </div>
+  </div>
+
+  <div class="verb-card">
+    <div class="verb-header" onclick="toggleVerb(this)">
+      <div><div class="verb-fi">alkaa</div><div class="verb-meaning">something begins / start doing</div></div>
+      <span class="verb-toggle">▼</span>
+    </div>
+    <div class="verb-body">
+      <div class="verb-example"><span class="fi">Kurssi alkaa ensi viikolla.</span><br><span class="en">The course starts next week.</span></div>
+      <div class="verb-example"><span class="fi">Alan lukemaan enemmän.</span><br><span class="en">I'll start reading more.</span></div>
+      <div class="verb-example"><span class="fi">Syksy alkaa pian.</span><br><span class="en">Autumn starts soon.</span></div>
+      <div class="verb-note">Alan + verb = "I start to do something". But: <b>Alan uuden kirjan</b> ✗ — use aloittaa for nouns.</div>
+    </div>
+  </div>
+
+  <div class="verb-card">
+    <div class="verb-header" onclick="toggleVerb(this)">
+      <div><div class="verb-fi">ruveta</div><div class="verb-meaning">to start doing something (puhekieli)</div></div>
+      <span class="verb-toggle">▼</span>
+    </div>
+    <div class="verb-body">
+      <div class="verb-example"><span class="fi">Rupeen opiskelemaan enemmän.</span><br><span class="en">I'll start studying more.</span></div>
+      <div class="verb-example"><span class="fi">Rupea nyt nukkumaan!</span><br><span class="en">Go to sleep now!</span></div>
+      <div class="verb-note">Present forms: <b>rupean</b> / <b>rupeen</b> (spoken)</div>
+    </div>
+  </div>
+
+  <div class="verb-card">
+    <div class="verb-header" onclick="toggleVerb(this)">
+      <div><div class="verb-fi">ryhtyä</div><div class="verb-meaning">to set about / take up (intentional)</div></div>
+      <span class="verb-toggle">▼</span>
+    </div>
+    <div class="verb-body">
+      <div class="verb-example"><span class="fi">Ryhdyn opiskelemaan suomea.</span><br><span class="en">I'll take up studying Finnish.</span></div>
+      <div class="verb-example"><span class="fi">Ryhdytään hommiin!</span><br><span class="en">Let's get to work!</span></div>
+      <div class="verb-example"><span class="fi">Hän ryhtyi yrittäjäksi.</span><br><span class="en">He/She became an entrepreneur.</span></div>
+      <div class="verb-note">Sounds more intentional and determined than ruveta or alkaa.</div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(1)">← Back</button>
+    <button class="btn btn-primary" onclick="goTo(3)">Next →</button>
+  </div>
+</div>
+
+<!-- STEP 3: Grammar -->
+<div class="step" id="step-3">
+  <p class="step-heading">Grammar</p>
+
+  <div class="grammar-block">
+    <div class="grammar-title">aloittaa vs alkaa — the key difference</div>
+    <table class="compare-table">
+      <tr><th>Verb</th><th>Use</th></tr>
+      <tr><td>aloittaa</td><td>Someone starts something — needs an object: <i>Aloitan kurssin.</i></td></tr>
+      <tr><td>alkaa</td><td>Something begins, or start + verb: <i>Kurssi alkaa. / Alan lukemaan.</i></td></tr>
+    </table>
+  </div>
+
+  <div class="grammar-block">
+    <div class="grammar-title">aikoa — conjugation</div>
+    <div class="grammar-body">
+      minä <b>aion</b> &nbsp;·&nbsp; sinä <b>aiot</b> &nbsp;·&nbsp; hän <b>aikoo</b><br>
+      me <b>aiomme</b> &nbsp;·&nbsp; te <b>aiotte</b> &nbsp;·&nbsp; he <b>aikovat</b>
+    </div>
+  </div>
+
+  <div class="grammar-block">
+    <div class="grammar-title">alkaa / ruveta / ryhtyä + verb</div>
+    <div class="grammar-body">When you start doing something, these verbs are commonly followed by the <b>-maan/-mään</b> form:</div>
+    <div class="grammar-examples">
+      <div class="gex"><span class="fi">Alan lukemaan.</span> <span class="en">I'll start reading.</span></div>
+      <div class="gex"><span class="fi">Rupeen opiskelemaan.</span> <span class="en">I'll start studying.</span></div>
+      <div class="gex"><span class="fi">Ryhdyn järjestämään.</span> <span class="en">I'll start organising.</span></div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+  <div class="section-label">Fill in the blank</div>
+
+  <div class="fill-item">
+    <div class="fill-sentence">Kurssi <input class="fill-input" id="f1" placeholder="alkaa / aloittaa" autocomplete="off" autocorrect="off" spellcheck="false"> ensi viikolla.</div>
+    <div class="fill-hint">Hint: the course itself begins</div>
+    <div class="fill-feedback" id="fb1"></div>
+  </div>
+
+  <div class="fill-item">
+    <div class="fill-sentence"><input class="fill-input" id="f2" placeholder="Aloitan / Alan" autocomplete="off" autocorrect="off" spellcheck="false"> uuden kirjan huomenna.</div>
+    <div class="fill-hint">Hint: someone starts a specific thing</div>
+    <div class="fill-feedback" id="fb2"></div>
+  </div>
+
+  <div class="fill-item">
+    <div class="fill-sentence">Meinasin <input class="fill-input" id="f3" placeholder="verb..." autocomplete="off" autocorrect="off" spellcheck="false"> kavereita viikonloppuna.</div>
+    <div class="fill-hint">Hint: "to see" = nähdä</div>
+    <div class="fill-feedback" id="fb3"></div>
+  </div>
+
+  <div class="fill-item">
+    <div class="fill-sentence">Rupeen <input class="fill-input" id="f4" placeholder="verb..." autocomplete="off" autocorrect="off" spellcheck="false"> enemmän.</div>
+    <div class="fill-hint">Hint: "to study" in -maan form = opiskelemaan</div>
+    <div class="fill-feedback" id="fb4"></div>
+  </div>
+
+  <button class="fill-check-btn" onclick="checkFills()">Check answers</button>
+
+  <div class="nav-row">
+    <button class="btn" onclick="goTo(2)">← Back</button>
+    <button class="btn btn-primary" onclick="goTo(4)">Practice →</button>
+  </div>
+</div>
+
+<!-- STEP 4: Quiz -->
+<div class="step" id="step-4">
+  <div id="quiz-area"></div>
+</div>
+
+<!-- STEP 5: Score -->
+<div class="step" id="step-5">
+  <div class="score-wrap">
+    <div class="score-big" id="score-num">0/5</div>
+    <div class="score-label">correct answers</div>
+    <div class="score-msg" id="score-msg"></div>
+  </div>
+  <div style="text-align:center; margin-bottom:1rem;">
+    <button class="btn" onclick="restartQuiz()">Try again</button>
+  </div>
+
+  <div class="insta-cta">
+    <p>Enjoyed this lesson? Follow us on Instagram for Finnish phrases, puhekieli tips and behind-the-scenes content.</p>
+    <a class="insta-btn" href="https://www.instagram.com/finnishdailydialogues" target="_blank">@finnishdailydialogues</a>
+  </div>
+
+  <div class="feedback-box">
+    <div class="grammar-title">How was it?</div>
+    <p class="feedback-sub">Help us make future FDD lessons better.</p>
+    <div class="feedback-options">
+      <button class="feedback-btn" onclick="giveFeedback(this)">Too easy</button>
+      <button class="feedback-btn" onclick="giveFeedback(this)">Just right</button>
+      <button class="feedback-btn" onclick="giveFeedback(this)">Too difficult</button>
+      <button class="feedback-btn" onclick="giveFeedback(this)">I want more lessons like this</button>
+    </div>
+    <div class="feedback-thanks" id="feedback-thanks"></div>
+  </div>
+
+  <p class="fdd-logo">Finnish Daily Dialogues · with Ida and Klaudia</p>
+</div>
+
+</div><!-- /content -->
+
+<script>
+var ANALYTICS_URL = 'https://script.google.com/macros/s/AKfycbzCpJyPZ0MjR1DWV0QnFxf23k6OEqqzfT3KD9VO1eQqLV3nHzl2PwsDCNOYS0v-Wpbz/exec';
+var LESSON_NAME = 'Alkaa vai aloittaa?';
+
+var attemptId = createAttemptId();
+var startedAt = Date.now();
+var feedbackValue = '';
+var lessonCompleted = false;
+
+function createAttemptId() {
+  return 'attempt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function sendAnalytics(data) {
+  try {
+    fetch(ANALYTICS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify(data)
+    });
+  } catch (e) {
+    console.log('Analytics error:', e);
+  }
+}
+
+/* ---------- START ---------- */
+
+sendAnalytics({
+  type: 'start',
+  attempt_id: attemptId,
+  lesson: LESSON_NAME
+});
+
+
+/* ---------- FILL IN THE BLANK ---------- */
+
+var fills = [
+  {
+    id: 'f1',
+    correct: 'alkaa',
+    alternatives: []
+  },
+  {
+    id: 'f2',
+    correct: 'aloitan',
+    alternatives: ['Aloitan']
+  },
+  {
+    id: 'f3',
+    correct: 'nähdä',
+    alternatives: ['nahda']
+  },
+  {
+    id: 'f4',
+    correct: 'opiskelemaan',
+    alternatives: []
+  }
+];
+
+var fillResults = {};
+
+function checkFills() {
+  var score = 0;
+
+  fills.forEach(function(fill) {
+    var input = document.getElementById(fill.id);
+
+    if (!input) return;
+
+    var answer = input.value.trim();
+
+    var correct =
+      answer.toLowerCase() === fill.correct.toLowerCase() ||
+      fill.alternatives.some(function(alt) {
+        return answer.toLowerCase() === alt.toLowerCase();
+      });
+
+    fillResults[fill.id] = {
+      selected: answer,
+      correct: correct
+    };
+
+    var feedback = input.parentElement.querySelector('.fill-feedback');
+
+    if (feedback) {
+      if (correct) {
+        feedback.textContent = '✓ Correct!';
+        feedback.className = 'fill-feedback correct';
+        score++;
+      } else {
+        feedback.textContent = '✗ Correct answer: ' + fill.correct;
+        feedback.className = 'fill-feedback incorrect';
+      }
+    }
+  });
+
+  return score;
+}
+
+
+/* ---------- QUIZ ---------- */
+
+var QUESTIONS = [
+  {
+    id: 'q1',
+    question: 'The movie starts at eight.',
+    options: [
+      'Elokuva aloittaa kahdeksalta.',
+      'Elokuva alkaa kahdeksalta.',
+      'Elokuva rupeaa kahdeksalta.'
+    ],
+    correct: 1
+  },
+  {
+    id: 'q2',
+    question: "I'm going to start a new hobby.",
+    options: [
+      'Aion alkaa uuden harrastuksen.',
+      'Aion aloittaa uuden harrastuksen.',
+      'Aion ruveta uuden harrastuksen.'
+    ],
+    correct: 1
+  },
+  {
+    id: 'q3',
+    question: 'Meinasin mennä salille means:',
+    options: [
+      'I went to the gym.',
+      'I was planning / intending to go to the gym.',
+      'I always go to the gym.'
+    ],
+    correct: 1
+  },
+  {
+    id: 'q4',
+    question: 'Which is a puhekieli form of rupean?',
+    options: [
+      'rupeen',
+      'rupen',
+      'rupean'
+    ],
+    correct: 0
+  },
+  {
+    id: 'q5',
+    question: 'Alan ___ enemmän.',
+    options: [
+      'lukea / lukemaan',
+      'lukeminen',
+      'lukee'
+    ],
+    correct: 0
+  }
+];
+
+var cur = 0;
+var score = 0;
+var answered = [];
+
+function renderQuiz() {
+  var q = QUESTIONS[cur];
+
+  var questionEl = document.getElementById('question');
+  var optionsEl = document.getElementById('options');
+
+  if (!questionEl || !optionsEl) return;
+
+  questionEl.textContent = q.question;
+  optionsEl.innerHTML = '';
+
+  q.options.forEach(function(option, index) {
+    var button = document.createElement('button');
+
+    button.className = 'option';
+    button.textContent = option;
+
+    button.onclick = function() {
+      if (answered[cur]) return;
+
+      answered[cur] = true;
+
+      var correct = index === q.correct;
+
+      if (correct) {
+        score++;
+      }
+
+      optionsEl.querySelectorAll('.option').forEach(function(btn, i) {
+        btn.disabled = true;
+
+        if (i === q.correct) {
+          btn.classList.add('correct');
+        }
+
+        if (i === index && !correct) {
+          btn.classList.add('incorrect');
+        }
+      });
+
+      var nextButton = document.getElementById('next-question');
+
+      if (nextButton) {
+        nextButton.style.display = 'block';
+      }
+    };
+
+    optionsEl.appendChild(button);
+  });
+
+  var progress = document.getElementById('quiz-progress');
+
+  if (progress) {
+    progress.textContent =
+      (cur + 1) + ' / ' + QUESTIONS.length;
+  }
+
+  var nextButton = document.getElementById('next-question');
+
+  if (nextButton) {
+    nextButton.style.display = 'none';
+  }
+}
+
+function nextQuestion() {
+  if (!answered[cur]) return;
+
+  if (cur < QUESTIONS.length - 1) {
+    cur++;
+    renderQuiz();
+  } else {
+    showScore();
+  }
+}
+
+
+/* ---------- SCORE ---------- */
+
+function calculateFillScore() {
+  var total = 0;
+
+  fills.forEach(function(fill) {
+    var input = document.getElementById(fill.id);
+
+    if (!input) return;
+
+    var answer = input.value.trim();
+
+    var correct =
+      answer.toLowerCase() === fill.correct.toLowerCase() ||
+      fill.alternatives.some(function(alt) {
+        return answer.toLowerCase() === alt.toLowerCase();
+      });
+
+    if (correct) {
+      total++;
+    }
+  });
+
+  return total;
+}
+
+function submitResults() {
+  if (lessonCompleted) return;
+
+  var fillScore = calculateFillScore();
+  var fillTotal = fills.length;
+
+  var quizScore = score;
+  var quizTotal = QUESTIONS.length;
+
+  var overallScore = fillScore + quizScore;
+  var overallTotal = fillTotal + quizTotal;
+
+  var percentage = Math.round(
+    overallScore / overallTotal * 100
+  );
+
+  var duration = Math.round(
+    (Date.now() - startedAt) / 1000
+  );
+
+  /* Session summary */
+
+  sendAnalytics({
+    type: 'session',
+    attempt_id: attemptId,
+    lesson: LESSON_NAME,
+    completed: true,
+    fill_score: fillScore,
+    fill_total: fillTotal,
+    quiz_score: quizScore,
+    quiz_total: quizTotal,
+    overall_score: overallScore,
+    overall_total: overallTotal,
+    percentage: percentage,
+    feedback: '',
+    duration_seconds: duration
+  });
+
+
+  /* Individual answers */
+
+  var answers = [];
+
+  fills.forEach(function(fill) {
+    var result = fillResults[fill.id];
+
+    var selected = result
+      ? result.selected
+      : '';
+
+    var correct = result
+      ? result.correct
+      : false;
+
+    answers.push({
+      question_id: fill.id,
+      question_type: 'fill',
+      selected_answer: selected,
+      correct_answer: fill.correct,
+      correct: correct
+    });
+  });
+
+
+  QUESTIONS.forEach(function(q, index) {
+    var selectedIndex = answered[index]
+      ? getSelectedQuizAnswer(index)
+      : null;
+
+    var selectedAnswer =
+      selectedIndex !== null
+        ? q.options[selectedIndex]
+        : '';
+
+    answers.push({
+      question_id: q.id,
+      question_type: 'multiple_choice',
+      selected_answer: selectedAnswer,
+      correct_answer: q.options[q.correct],
+      correct: selectedIndex === q.correct
+    });
+  });
+
+
+  sendAnalytics({
+    type: 'answers',
+    attempt_id: attemptId,
+    lesson: LESSON_NAME,
+    answers: answers
+  });
+
+  lessonCompleted = true;
+}
+
+
+/* ---------- QUIZ ANSWERS ---------- */
+
+var selectedQuizAnswers = {};
+
+function getSelectedQuizAnswer(index) {
+  return selectedQuizAnswers[index] !== undefined
+    ? selectedQuizAnswers[index]
+    : null;
+}
+
+
+/* ---------- FEEDBACK ---------- */
+
+function giveFeedback(btn) {
+  var buttons = document.querySelectorAll('.feedback-btn');
+
+  buttons.forEach(function(button) {
+    button.classList.remove('selected');
+  });
+
+  btn.classList.add('selected');
+
+  feedbackValue = btn.textContent;
+
+  var thanks = document.getElementById('feedback-thanks');
+
+  if (thanks) {
+    thanks.textContent = 'Thanks! ❤️';
+  }
+
+  sendAnalytics({
+    type: 'feedback',
+    attempt_id: attemptId,
+    lesson: LESSON_NAME,
+    feedback: feedbackValue
+  });
+}
+
+
+/* ---------- SCORE SCREEN ---------- */
+
+function showScore() {
+  var scoreElement = document.getElementById('score');
+
+  if (scoreElement) {
+    scoreElement.textContent =
+      score + '/' + QUESTIONS.length;
+  }
+
+  var message = document.getElementById('score-message');
+
+  if (message) {
+    if (score === QUESTIONS.length) {
+      message.textContent = 'Perfect! 🎉';
+    } else if (score >= 3) {
+      message.textContent = 'Nice work!';
+    } else {
+      message.textContent = 'Keep practising!';
+    }
+  }
+
+  submitResults();
+}
+
+
+/* ---------- RESTART ---------- */
+
+function restartQuiz() {
+  cur = 0;
+  score = 0;
+  answered = [];
+  selectedQuizAnswers = {};
+
+  attemptId = createAttemptId();
+  startedAt = Date.now();
+  feedbackValue = '';
+  lessonCompleted = false;
+
+  sendAnalytics({
+    type: 'start',
+    attempt_id: attemptId,
+    lesson: LESSON_NAME
+  });
+
+  renderQuiz();
+}
+
+
+/* ---------- NAVIGATION ---------- */
+
+function goTo(step) {
+  var steps = document.querySelectorAll('.step');
+
+  steps.forEach(function(el, index) {
+    el.classList.toggle(
+      'active',
+      index === step
+    );
+  });
+
+  if (step === 4) {
+    renderQuiz();
+  }
+
+  if (step === 5) {
+    showScore();
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+</script>
+
+</body>
+</html>
