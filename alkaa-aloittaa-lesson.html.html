@@ -444,16 +444,22 @@
 </div><!-- /content -->
 
 <script>
+/* =========================================================
+   ANALYTICS
+   ========================================================= */
+
 var ANALYTICS_URL = 'https://script.google.com/macros/s/AKfycbzCpJyPZ0MjR1DWV0QnFxf23k6OEqqzfT3KD9VO1eQqLV3nHzl2PwsDCNOYS0v-Wpbz/exec';
 var LESSON_NAME = 'Alkaa vai aloittaa?';
 
 var attemptId = createAttemptId();
 var startedAt = Date.now();
-var feedbackValue = '';
 var lessonCompleted = false;
+var feedbackValue = '';
 
 function createAttemptId() {
-  return 'attempt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  return 'attempt_' +
+    Date.now() + '_' +
+    Math.random().toString(36).substring(2, 9);
 }
 
 function sendAnalytics(data) {
@@ -466,13 +472,12 @@ function sendAnalytics(data) {
       },
       body: JSON.stringify(data)
     });
-  } catch (e) {
-    console.log('Analytics error:', e);
+  } catch (error) {
+    console.log('Analytics error:', error);
   }
 }
 
-/* ---------- START ---------- */
-
+/* Record that the lesson was opened */
 sendAnalytics({
   type: 'start',
   attempt_id: attemptId,
@@ -480,65 +485,105 @@ sendAnalytics({
 });
 
 
-/* ---------- FILL IN THE BLANK ---------- */
+/* =========================================================
+   FILL-IN EXERCISES
+   ========================================================= */
 
 var fills = [
   {
     id: 'f1',
+    fb: 'fb1',
     correct: 'alkaa',
-    alternatives: []
+    alt: []
   },
   {
     id: 'f2',
+    fb: 'fb2',
     correct: 'aloitan',
-    alternatives: ['Aloitan']
+    alt: ['Aloitan']
   },
   {
     id: 'f3',
+    fb: 'fb3',
     correct: 'nähdä',
-    alternatives: ['nahda']
+    alt: ['nahda']
   },
   {
     id: 'f4',
+    fb: 'fb4',
     correct: 'opiskelemaan',
-    alternatives: []
+    alt: ['opiskella']
   }
 ];
 
-var fillResults = {};
+function normaliseAnswer(value) {
+  return (value || '')
+    .trim()
+    .toLowerCase();
+}
+
+function isFillCorrect(fill, value) {
+  var answer = normaliseAnswer(value);
+  var correct = normaliseAnswer(fill.correct);
+
+  if (answer === correct) {
+    return true;
+  }
+
+  for (var i = 0; i < fill.alt.length; i++) {
+    if (answer === normaliseAnswer(fill.alt[i])) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 function checkFills() {
   var score = 0;
 
   fills.forEach(function(fill) {
     var input = document.getElementById(fill.id);
+    var feedback = document.getElementById(fill.fb);
 
     if (!input) return;
 
-    var answer = input.value.trim();
+    var correct = isFillCorrect(fill, input.value);
 
-    var correct =
-      answer.toLowerCase() === fill.correct.toLowerCase() ||
-      fill.alternatives.some(function(alt) {
-        return answer.toLowerCase() === alt.toLowerCase();
-      });
+    if (correct) {
+      score++;
 
-    fillResults[fill.id] = {
-      selected: answer,
-      correct: correct
-    };
-
-    var feedback = input.parentElement.querySelector('.fill-feedback');
-
-    if (feedback) {
-      if (correct) {
-        feedback.textContent = '✓ Correct!';
+      if (feedback) {
         feedback.className = 'fill-feedback correct';
-        score++;
-      } else {
-        feedback.textContent = '✗ Correct answer: ' + fill.correct;
-        feedback.className = 'fill-feedback incorrect';
+        feedback.textContent = '✓ Correct';
       }
+
+      input.classList.remove('wrong');
+      input.classList.add('correct');
+
+    } else {
+
+      if (feedback) {
+        feedback.className = 'fill-feedback wrong';
+        feedback.textContent = 'Not quite — try again.';
+      }
+
+      input.classList.remove('correct');
+      input.classList.add('wrong');
+    }
+  });
+
+  return score;
+}
+
+function calculateFillScore() {
+  var score = 0;
+
+  fills.forEach(function(fill) {
+    var input = document.getElementById(fill.id);
+
+    if (input && isFillCorrect(fill, input.value)) {
+      score++;
     }
   });
 
@@ -546,58 +591,60 @@ function checkFills() {
 }
 
 
-/* ---------- QUIZ ---------- */
+/* =========================================================
+   QUIZ
+   ========================================================= */
 
 var QUESTIONS = [
   {
-    id: 'q1',
-    question: 'The movie starts at eight.',
-    options: [
-      'Elokuva aloittaa kahdeksalta.',
-      'Elokuva alkaa kahdeksalta.',
-      'Elokuva rupeaa kahdeksalta.'
+    q: "You want to say 'The movie starts at eight.' Which verb?",
+    opts: [
+      "Elokuva aloittaa kello kahdeksan.",
+      "Elokuva alkaa kello kahdeksan.",
+      "Elokuva aion kello kahdeksan.",
+      "Elokuva rupeaa kello kahdeksan."
     ],
-    correct: 1
+    ans: 1
   },
   {
-    id: 'q2',
-    question: "I'm going to start a new hobby.",
-    options: [
-      'Aion alkaa uuden harrastuksen.',
-      'Aion aloittaa uuden harrastuksen.',
-      'Aion ruveta uuden harrastuksen.'
+    q: "'I'm going to start a new hobby' — which is correct?",
+    opts: [
+      "Alan uuden harrastuksen.",
+      "Alkaan uuden harrastuksen.",
+      "Aion aloittaa uuden harrastuksen.",
+      "Rupean uuden harrastuksen."
     ],
-    correct: 1
+    ans: 2
   },
   {
-    id: 'q3',
-    question: 'Meinasin mennä salille means:',
-    options: [
-      'I went to the gym.',
-      'I was planning / intending to go to the gym.',
-      'I always go to the gym.'
+    q: "'Meinasin mennä salille' means:",
+    opts: [
+      "I definitely went to the gym.",
+      "I was going to go to the gym / I almost went.",
+      "I always go to the gym.",
+      "I'm going to the gym right now."
     ],
-    correct: 1
+    ans: 1
   },
   {
-    id: 'q4',
-    question: 'Which is a puhekieli form of rupean?',
-    options: [
-      'rupeen',
-      'rupen',
-      'rupean'
+    q: "In puhekieli, 'rupean' usually becomes:",
+    opts: [
+      "rupeen",
+      "rupaan",
+      "rupean",
+      "ruven"
     ],
-    correct: 0
+    ans: 0
   },
   {
-    id: 'q5',
-    question: 'Alan ___ enemmän.',
-    options: [
-      'lukea / lukemaan',
-      'lukeminen',
-      'lukee'
+    q: "Alan ___ enemmän.",
+    opts: [
+      "opiskella",
+      "opiskelemaan",
+      "opiskelen",
+      "opiskelu"
     ],
-    correct: 0
+    ans: 0
   }
 ];
 
@@ -605,127 +652,205 @@ var cur = 0;
 var score = 0;
 var answered = [];
 
+
+/* =========================================================
+   QUIZ RENDERING
+   ========================================================= */
+
 function renderQuiz() {
+  var area = document.getElementById('quiz-area');
+
+  if (!area) return;
+
   var q = QUESTIONS[cur];
 
-  var questionEl = document.getElementById('question');
-  var optionsEl = document.getElementById('options');
+  var html = '';
 
-  if (!questionEl || !optionsEl) return;
+  html += '<div class="quiz-question">';
+  html += '<div class="question-number">Question ' +
+    (cur + 1) + ' / ' + QUESTIONS.length + '</div>';
 
-  questionEl.textContent = q.question;
-  optionsEl.innerHTML = '';
+  html += '<div class="question-text">' + q.q + '</div>';
 
-  q.options.forEach(function(option, index) {
-    var button = document.createElement('button');
+  html += '<div class="quiz-options">';
 
-    button.className = 'option';
-    button.textContent = option;
+  q.opts.forEach(function(opt, i) {
 
-    button.onclick = function() {
-      if (answered[cur]) return;
+    var selected = answered[cur] === i;
 
-      answered[cur] = true;
+    html += '<button ';
+    html += 'class="quiz-option' +
+      (selected ? ' selected' : '') +
+      '" ';
+    html += 'onclick="answer(' + i + ')"';
+    html += '>';
 
-      var correct = index === q.correct;
+    html += '<span class="option-letter">' +
+      String.fromCharCode(65 + i) +
+      '</span>';
 
-      if (correct) {
-        score++;
-      }
+    html += '<span>' + opt + '</span>';
 
-      optionsEl.querySelectorAll('.option').forEach(function(btn, i) {
-        btn.disabled = true;
-
-        if (i === q.correct) {
-          btn.classList.add('correct');
-        }
-
-        if (i === index && !correct) {
-          btn.classList.add('incorrect');
-        }
-      });
-
-      var nextButton = document.getElementById('next-question');
-
-      if (nextButton) {
-        nextButton.style.display = 'block';
-      }
-    };
-
-    optionsEl.appendChild(button);
+    html += '</button>';
   });
 
-  var progress = document.getElementById('quiz-progress');
+  html += '</div>';
 
-  if (progress) {
-    progress.textContent =
-      (cur + 1) + ' / ' + QUESTIONS.length;
+  if (answered[cur] !== undefined) {
+
+    var isCorrect = answered[cur] === q.ans;
+
+    html += '<div class="quiz-feedback ' +
+      (isCorrect ? 'correct' : 'wrong') +
+      '">';
+
+    if (isCorrect) {
+      html += '✓ Correct!';
+    } else {
+      html += 'Not quite. The correct answer is: <strong>' +
+        q.opts[q.ans] +
+        '</strong>';
+    }
+
+    html += '</div>';
+
+    if (cur < QUESTIONS.length - 1) {
+      html += '<button class="next-btn" onclick="nextQ()">';
+      html += 'Next →';
+      html += '</button>';
+    } else {
+      html += '<button class="next-btn" onclick="goTo(5)">';
+      html += 'See your score →';
+      html += '</button>';
+    }
   }
 
-  var nextButton = document.getElementById('next-question');
+  html += '</div>';
 
-  if (nextButton) {
-    nextButton.style.display = 'none';
-  }
+  area.innerHTML = html;
 }
 
-function nextQuestion() {
-  if (!answered[cur]) return;
+
+/* =========================================================
+   QUIZ ANSWER
+   ========================================================= */
+
+function answer(i) {
+
+  /* Don't allow changing an already answered question */
+  if (answered[cur] !== undefined) {
+    return;
+  }
+
+  answered[cur] = i;
+
+  if (i === QUESTIONS[cur].ans) {
+    score++;
+  }
+
+  renderQuiz();
+}
+
+
+/* =========================================================
+   NEXT QUESTION
+   ========================================================= */
+
+function nextQ() {
+
+  if (answered[cur] === undefined) {
+    return;
+  }
 
   if (cur < QUESTIONS.length - 1) {
     cur++;
     renderQuiz();
-  } else {
-    showScore();
   }
 }
 
 
-/* ---------- SCORE ---------- */
+/* =========================================================
+   COLLECT ALL ANSWERS FOR GOOGLE SHEETS
+   ========================================================= */
 
-function calculateFillScore() {
-  var total = 0;
+function collectAnswers() {
 
-  fills.forEach(function(fill) {
+  var answers = [];
+
+  /* Fill-in questions */
+
+  fills.forEach(function(fill, index) {
+
     var input = document.getElementById(fill.id);
+    var selected = input ? input.value.trim() : '';
 
-    if (!input) return;
-
-    var answer = input.value.trim();
-
-    var correct =
-      answer.toLowerCase() === fill.correct.toLowerCase() ||
-      fill.alternatives.some(function(alt) {
-        return answer.toLowerCase() === alt.toLowerCase();
-      });
-
-    if (correct) {
-      total++;
-    }
+    answers.push({
+      question_id: 'f' + (index + 1),
+      question_type: 'fill',
+      selected_answer: selected,
+      correct_answer: fill.correct,
+      correct: isFillCorrect(fill, selected)
+    });
   });
 
-  return total;
+
+  /* Multiple-choice questions */
+
+  QUESTIONS.forEach(function(q, index) {
+
+    var selectedIndex = answered[index];
+
+    answers.push({
+      question_id: 'q' + (index + 1),
+      question_type: 'multiple_choice',
+
+      selected_answer:
+        selectedIndex !== undefined
+          ? q.opts[selectedIndex]
+          : '',
+
+      correct_answer: q.opts[q.ans],
+
+      correct:
+        selectedIndex !== undefined &&
+        selectedIndex === q.ans
+    });
+  });
+
+  return answers;
 }
 
+
+/* =========================================================
+   SUBMIT FINAL SESSION
+   ========================================================= */
+
 function submitResults() {
-  if (lessonCompleted) return;
+
+  /* Prevent duplicate completion events */
+  if (lessonCompleted) {
+    return;
+  }
 
   var fillScore = calculateFillScore();
-  var fillTotal = fills.length;
-
   var quizScore = score;
-  var quizTotal = QUESTIONS.length;
 
   var overallScore = fillScore + quizScore;
-  var overallTotal = fillTotal + quizTotal;
+  var overallTotal = fills.length + QUESTIONS.length;
 
   var percentage = Math.round(
-    overallScore / overallTotal * 100
+    (overallScore / overallTotal) * 100
   );
 
-  var duration = Math.round(
+  var durationSeconds = Math.round(
     (Date.now() - startedAt) / 1000
   );
+
+
+  /* Mark completed BEFORE sending,
+     so navigating back to Score doesn't submit twice */
+  lessonCompleted = true;
+
 
   /* Session summary */
 
@@ -733,89 +858,131 @@ function submitResults() {
     type: 'session',
     attempt_id: attemptId,
     lesson: LESSON_NAME,
-    completed: true,
+
     fill_score: fillScore,
-    fill_total: fillTotal,
+    fill_total: fills.length,
+
     quiz_score: quizScore,
-    quiz_total: quizTotal,
+    quiz_total: QUESTIONS.length,
+
     overall_score: overallScore,
     overall_total: overallTotal,
+
     percentage: percentage,
-    feedback: '',
-    duration_seconds: duration
+
+    feedback: feedbackValue,
+
+    duration_seconds: durationSeconds
   });
 
 
   /* Individual answers */
 
-  var answers = [];
-
-  fills.forEach(function(fill) {
-    var result = fillResults[fill.id];
-
-    var selected = result
-      ? result.selected
-      : '';
-
-    var correct = result
-      ? result.correct
-      : false;
-
-    answers.push({
-      question_id: fill.id,
-      question_type: 'fill',
-      selected_answer: selected,
-      correct_answer: fill.correct,
-      correct: correct
-    });
-  });
-
-
-  QUESTIONS.forEach(function(q, index) {
-    var selectedIndex = answered[index]
-      ? getSelectedQuizAnswer(index)
-      : null;
-
-    var selectedAnswer =
-      selectedIndex !== null
-        ? q.options[selectedIndex]
-        : '';
-
-    answers.push({
-      question_id: q.id,
-      question_type: 'multiple_choice',
-      selected_answer: selectedAnswer,
-      correct_answer: q.options[q.correct],
-      correct: selectedIndex === q.correct
-    });
-  });
-
-
   sendAnalytics({
     type: 'answers',
     attempt_id: attemptId,
     lesson: LESSON_NAME,
-    answers: answers
+    answers: collectAnswers()
+  });
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function goTo(n) {
+
+  document.querySelectorAll('.step').forEach(function(step) {
+    step.classList.remove('visible');
   });
 
-  lessonCompleted = true;
+  var target = document.getElementById('step-' + n);
+
+  if (target) {
+    target.classList.add('visible');
+  }
+
+
+  document.querySelectorAll('.tab').forEach(function(tab) {
+    tab.classList.remove('active');
+  });
+
+  var tabs = document.querySelectorAll('.tab');
+
+  if (tabs[n]) {
+    tabs[n].classList.add('active');
+  }
+
+
+  if (n === 4) {
+    renderQuiz();
+  }
+
+  if (n === 5) {
+    showScore();
+  }
 }
 
 
-/* ---------- QUIZ ANSWERS ---------- */
+/* =========================================================
+   SCORE
+   ========================================================= */
 
-var selectedQuizAnswers = {};
+function showScore() {
 
-function getSelectedQuizAnswer(index) {
-  return selectedQuizAnswers[index] !== undefined
-    ? selectedQuizAnswers[index]
-    : null;
+  var scoreNum = document.getElementById('score-num');
+  var scoreMsg = document.getElementById('score-msg');
+
+  if (scoreNum) {
+    /*
+      Keep the visible score as the original 5-question quiz score.
+      Analytics separately stores fill score + quiz score.
+    */
+    scoreNum.textContent =
+      score + '/' + QUESTIONS.length;
+  }
+
+
+  if (scoreMsg) {
+
+    if (score === QUESTIONS.length) {
+
+      scoreMsg.textContent =
+        'Perfect! You’ve got it. 👽';
+
+    } else if (score >= 4) {
+
+      scoreMsg.textContent =
+        'Almost there — you clearly know your alkaa from your aloittaa.';
+
+    } else if (score >= 3) {
+
+      scoreMsg.textContent =
+        'Pretty good! A little more practice and these verbs will feel natural.';
+
+    } else {
+
+      scoreMsg.textContent =
+        'These verbs take practice — give the lesson another go.';
+    }
+  }
+
+
+  submitResults();
 }
 
 
-/* ---------- FEEDBACK ---------- */
+/* =========================================================
+   FEEDBACK
+   ========================================================= */
 
 function giveFeedback(btn) {
+
+  if (!btn) return;
+
+  feedbackValue = btn.textContent.trim();
+
   var buttons = document.querySelectorAll('.feedback-btn');
 
   buttons.forEach(function(button) {
@@ -824,13 +991,13 @@ function giveFeedback(btn) {
 
   btn.classList.add('selected');
 
-  feedbackValue = btn.textContent;
 
   var thanks = document.getElementById('feedback-thanks');
 
   if (thanks) {
-    thanks.textContent = 'Thanks! ❤️';
+    thanks.textContent = 'Thanks! This helps us a lot.';
   }
+
 
   sendAnalytics({
     type: 'feedback',
@@ -841,44 +1008,24 @@ function giveFeedback(btn) {
 }
 
 
-/* ---------- SCORE SCREEN ---------- */
-
-function showScore() {
-  var scoreElement = document.getElementById('score');
-
-  if (scoreElement) {
-    scoreElement.textContent =
-      score + '/' + QUESTIONS.length;
-  }
-
-  var message = document.getElementById('score-message');
-
-  if (message) {
-    if (score === QUESTIONS.length) {
-      message.textContent = 'Perfect! 🎉';
-    } else if (score >= 3) {
-      message.textContent = 'Nice work!';
-    } else {
-      message.textContent = 'Keep practising!';
-    }
-  }
-
-  submitResults();
-}
-
-
-/* ---------- RESTART ---------- */
+/* =========================================================
+   RESTART
+   ========================================================= */
 
 function restartQuiz() {
+
   cur = 0;
   score = 0;
   answered = [];
-  selectedQuizAnswers = {};
+
+  lessonCompleted = false;
+  feedbackValue = '';
 
   attemptId = createAttemptId();
   startedAt = Date.now();
-  feedbackValue = '';
-  lessonCompleted = false;
+
+
+  /* New attempt */
 
   sendAnalytics({
     type: 'start',
@@ -886,36 +1033,36 @@ function restartQuiz() {
     lesson: LESSON_NAME
   });
 
+
+  /* Clear quiz */
+
   renderQuiz();
+
+
+  /* Go back to quiz */
+
+  goTo(4);
 }
 
 
-/* ---------- NAVIGATION ---------- */
+/* =========================================================
+   EXISTING CARD / VERB INTERACTIONS
+   ========================================================= */
 
-function goTo(step) {
-  var steps = document.querySelectorAll('.step');
-
-  steps.forEach(function(el, index) {
-    el.classList.toggle(
-      'active',
-      index === step
-    );
-  });
-
-  if (step === 4) {
-    renderQuiz();
-  }
-
-  if (step === 5) {
-    showScore();
-  }
-
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
+function toggle(card) {
+  card.classList.toggle('open');
 }
+
+function toggleVerb(header) {
+  var card = header.parentElement;
+  card.classList.toggle('open');
+}
+
+
+/* =========================================================
+   INITIAL RENDER
+   ========================================================= */
+
+renderQuiz();
+
 </script>
-
-</body>
-</html>
